@@ -13,162 +13,196 @@ ARM Macro Assembler    Page 1
     6 00000000         
     7 00000000                 EXPORT           start
     8 00000000         start
-    9 00000000         
+    9 00000000         ;loading in number to process
    10 00000000 E59F0280        LDR              R0, =1049
-   11 00000004 E59F1280        LDR              R1, =LUT
-   12 00000008 E3A02000        MOV              R2, #0
-   13 0000000C E3A03000        MOV              R3, #0
-   14 00000010 E3A04000        MOV              R4, #0
-   15 00000014 E3A05000        MOV              R5, #0
-   16 00000018 E3A0C000        MOV              R12, #0
-   17 0000001C E3A0B00A        MOV              R11, #10
-   18 00000020 E3500000        CMP              R0, #0
-   19 00000024 5A000001        BPL              pos
-   20 00000028         
-   21 00000028         ;negating the value of R1 and changing the sign
-   22 00000028 E2600000        NEG              R0, R0
-   23 0000002C E3A0B00B        MOV              R11, #11
-   24 00000030         
-   25 00000030 E4912004 
+   11 00000004         ;look up table for powers of 10
+   12 00000004 E59F1280        LDR              R1, =LUT
+   13 00000008         ;initialising registers
+   14 00000008 E3A02000        MOV              R2, #0
+   15 0000000C E3A03000        MOV              R3, #0
+   16 00000010 E3A04000        MOV              R4, #0
+   17 00000014 E3A05000        MOV              R5, #0
+   18 00000018 E3A0C000        MOV              R12, #0
+   19 0000001C E3A0B00A        MOV              R11, #10
+   20 00000020 E3500000        CMP              R0, #0
+   21 00000024 5A000001        BPL              pos
+   22 00000028         
+   23 00000028         ;if number is negative negate it and set to flag to 11
+   24 00000028         ;negating the value of R1 and changing the sign
+   25 00000028 E2600000        NEG              R0, R0
+   26 0000002C E3A0B00B        MOV              R11, #11
+   27 00000030         
+   28 00000030         ;load first of LUT  and shift to next 
+   29 00000030 E4912004 
                        pos     LDR              R2, [R1], #4
-   26 00000034         
-   27 00000034         while
-   28 00000034 E1A00000        MOV              R0, R0
-   29 00000038 E0500002        SUBS             R0, R0, R2
-   30 0000003C 4A000001        BMI              next_check
-   31 00000040 E2844001        ADD              R4, #1
-   32 00000044 EAFFFFFA        B                while
-   33 00000048         next_check
-   34 00000048 E0800002        ADD              R0, R0, R2
-   35 0000004C E1A04004        MOV              R4, R4
-   36 00000050 E3540000        CMP              R4, #0
-   37 00000054 0A000000        BEQ              skip_1
-   38 00000058 E3A05001        MOV              R5, #1
-   39 0000005C         skip_1
-   40 0000005C E1A05005        MOV              R5, R5
-   41 00000060 E3550000        CMP              R5 ,#0
-   42 00000064 0A000001        BEQ              skip_2
-   43 00000068 E48D4004        STR              R4, [R13], #4
-   44 0000006C E24CC004        ADD              R12, R12, #-4
-   45 00000070         skip_2
-   46 00000070 E3A04000        MOV              R4, #0
-   47 00000074 E1A02002        MOV              R2, R2
-   48 00000078 E3520001        CMP              R2, #1
-   49 0000007C 0A000001        BEQ              finish_check
-   50 00000080 E4912004        LDR              R2, [R1], #4
-   51 00000084 EAFFFFEA        B                while
-   52 00000088         
-   53 00000088         finish_check
-   54 00000088         
-   55 00000088         
-   56 00000088 E0028018 
-                       IO1DIR  EQU              0xE0028018
+   30 00000034         
+   31 00000034         while
+   32 00000034         ;set flags
+   33 00000034         ;subtract until number goes negative
+   34 00000034         ;and increment counter
+   35 00000034 E1A00000        MOV              R0, R0
+   36 00000038 E0500002        SUBS             R0, R0, R2
+   37 0000003C 4A000001        BMI              next_check
+   38 00000040 E2844001        ADD              R4, #1
+   39 00000044 EAFFFFFA        B                while
+   40 00000048         next_check
+   41 00000048         ;add back one number
+   42 00000048         ;compare with zero and skip if equal to zero
+   43 00000048 E0800002        ADD              R0, R0, R2
+   44 0000004C E1A04004        MOV              R4, R4
+   45 00000050 E3540000        CMP              R4, #0
+   46 00000054 0A000000        BEQ              skip_1
+   47 00000058 E3A05001        MOV              R5, #1
+   48 0000005C         skip_1
+   49 0000005C         ;compare flag with 0 and skip if equal 
+   50 0000005C         ;when first non zero number is processed this flag will 
+                       be 1
+   51 0000005C E1A05005        MOV              R5, R5
+   52 00000060 E3550000        CMP              R5 ,#0
+   53 00000064 0A000001        BEQ              skip_2
+   54 00000068         ;store the counter in the stack and increment the 'stack
+                        pointer'
+   55 00000068         ;subtract 4 from 'stack counter'
 
 
 
 ARM Macro Assembler    Page 2 
 
 
-   57 00000088 E0028014 
+   56 00000068 E48D4004        STR              R4, [R13], #4
+   57 0000006C E24CC004        ADD              R12, R12, #-4
+   58 00000070         skip_2
+   59 00000070         ;reset counter to zero
+   60 00000070         ;if we are a the end of LUT exit loop
+   61 00000070         ;otherwise load next LUT value and increment the LUT
+   62 00000070 E3A04000        MOV              R4, #0
+   63 00000074 E1A02002        MOV              R2, R2
+   64 00000078 E3520001        CMP              R2, #1
+   65 0000007C 0A000001        BEQ              finish_check
+   66 00000080 E4912004        LDR              R2, [R1], #4
+   67 00000084 EAFFFFEA        B                while
+   68 00000088         
+   69 00000088         finish_check
+   70 00000088         
+   71 00000088         ;initalising the outputs to the board
+   72 00000088 E0028018 
+                       IO1DIR  EQU              0xE0028018
+   73 00000088 E0028014 
                        IO1SET  EQU              0xE0028014
-   58 00000088 E002801C 
+   74 00000088 E002801C 
                        IO1CLR  EQU              0xE002801C
-   59 00000088         
-   60 00000088 E59F1200        ldr              r1,=IO1DIR
-   61 0000008C E3A0280F        ldr              r2,=0x000f0000 ;select P1.19--P
+   75 00000088         
+   76 00000088 E59F1200        ldr              r1,=IO1DIR
+   77 0000008C E3A0280F        ldr              r2,=0x000f0000 ;select P1.19--P
                                                             1.16
-   62 00000090 E5812000        str              r2,[r1]     ;make them outputs
-   63 00000094 E59F11F8        ldr              r1,=IO1SET
-   64 00000098 E5812000        str              r2,[r1]     ;set them to turn t
+   78 00000090 E5812000        str              r2,[r1]     ;make them outputs
+   79 00000094 E59F11F8        ldr              r1,=IO1SET
+   80 00000098 E5812000        str              r2,[r1]     ;set them to turn t
                                                             he LEDs off
-   65 0000009C E59F21F4        ldr              r2,=IO1CLR
-   66 000000A0         
-   67 000000A0         ; r1 points to the SET register
-   68 000000A0         ; r2 points to the CLEAR register
-   69 000000A0         
-   70 000000A0 E3A03801        ldr              r3,=0x00010000 
+   81 0000009C E59F21F4        ldr              r2,=IO1CLR
+   82 000000A0         
+   83 000000A0         ; r1 points to the SET register
+   84 000000A0         ; r2 points to the CLEAR register
+   85 000000A0         
+   86 000000A0         ;set the registers that represent each LED
+   87 000000A0 E3A03801        ldr              r3,=0x00010000 
                                                             ; start with P1.16.
                                                             
-   71 000000A4 E1A08083        mov              r8,r3, lsl #1 ;r10 is for P1.17
+   88 000000A4 E1A08083        mov              r8,r3, lsl #1 ;r10 is for P1.17
                                                             
-   72 000000A8 E1A09103        mov              r9,r3, lsl #2 ;r10 is for P1.18
+   89 000000A8 E1A09103        mov              r9,r3, lsl #2 ;r10 is for P1.18
                                                             
-   73 000000AC E1A0A183        mov              r10,r3, lsl #3 
+   90 000000AC E1A0A183        mov              r10,r3, lsl #3 
                                                             ;r10 is for P1.19
-   74 000000B0         
-   75 000000B0         loop_
-   76 000000B0 E1A0700C        MOV              r7, r12
-   77 000000B4 E5813000        str              r3,[r1]     ; clear the bit -> 
+   91 000000B0         
+   92 000000B0         ;entering main loop
+   93 000000B0         loop_
+   94 000000B0         ;reseting the 'stack counter'
+   95 000000B0 E1A0700C        MOV              r7, r12
+   96 000000B4 E5813000        str              r3,[r1]     ; clear the bit -> 
                                                             turn off the LEDs
-   78 000000B8 E5818000        str              r8,[r1]
-   79 000000BC E5819000        str              r9,[r1]
-   80 000000C0 E581A000        str              r10,[r1]
-   81 000000C4         
-   82 000000C4         ;delay for about a second
-   83 000000C4 E59F41D0        ldr              r4,=40000000
-   84 000000C8 E1A04004        mov              r4, r4
-   85 000000CC E2544001 
-                       dloop   subs             r4,r4,#1
-   86 000000D0 1AFFFFFD        bne              dloop
-   87 000000D4         
-   88 000000D4         
-   89 000000D4 E35B000A        CMP              r11, #10
-   90 000000D8 0A000004        BEQ              positive
-   91 000000DC         
-   92 000000DC E5823000        str              r3,[r2]     ;turn on P1.16 LED 
-                                                            (+) 
-   93 000000E0 E5818000        str              r8,[r1]     ;turn off P1.17
-   94 000000E4 E5829000        str              r9,[r2]     ;turn on P1.18
-   95 000000E8 E582A000        str              r10,[r2]    ;turn off P1.19
-   96 000000EC EA000003        B                skip_pos
-   97 000000F0         
-   98 000000F0         positive
-   99 000000F0 E5823000        str              r3,[r2]     ;turn on P1.16 LED 
-                                                            (+) 
-  100 000000F4 E5818000        str              r8,[r1]     ;turn off P1.17
-  101 000000F8 E5829000        str              r9,[r2]     ;turn on P1.18
-  102 000000FC E581A000        str              r10,[r1]    ;turn on P1.19
+   97 000000B8 E5818000        str              r8,[r1]
+   98 000000BC E5819000        str              r9,[r1]
+   99 000000C0 E581A000        str              r10,[r1]
+  100 000000C4         
+  101 000000C4         ;delay for about 2 seconds
+  102 000000C4 E59F41D0        ldr              r4,=40000000
+  103 000000C8 E1A04004        mov              r4, r4
 
 
 
 ARM Macro Assembler    Page 3 
 
 
-  103 00000100         
-  104 00000100         skip_pos
-  105 00000100         
-  106 00000100         
-  107 00000100 E59F4198        ldr              r4,=20000000 ;delay to show the
+  104 000000CC E2544001 
+                       dloop   subs             r4,r4,#1
+  105 000000D0 1AFFFFFD        bne              dloop
+  106 000000D4         
+  107 000000D4         ;check the sign flag
+  108 000000D4         ;if positive set leds to 1010 otherwise 1011
+  109 000000D4 E35B000A        CMP              r11, #10
+  110 000000D8 0A000004        BEQ              positive
+  111 000000DC         
+  112 000000DC E5823000        str              r3,[r2]     ;turn on P1.16 LED 
+                                                            (+) 
+  113 000000E0 E5818000        str              r8,[r1]     ;turn off P1.17
+  114 000000E4 E5829000        str              r9,[r2]     ;turn on P1.18
+  115 000000E8 E582A000        str              r10,[r2]    ;turn off P1.19
+  116 000000EC EA000003        B                skip_pos
+  117 000000F0         
+  118 000000F0         positive
+  119 000000F0 E5823000        str              r3,[r2]     ;turn on P1.16 LED 
+                                                            (+) 
+  120 000000F4 E5818000        str              r8,[r1]     ;turn off P1.17
+  121 000000F8 E5829000        str              r9,[r2]     ;turn on P1.18
+  122 000000FC E581A000        str              r10,[r1]    ;turn on P1.19
+  123 00000100         
+  124 00000100         skip_pos
+  125 00000100         
+  126 00000100 E59F4198        ldr              r4,=20000000 ;delay to show the
                                                              sign
-  108 00000104 E1A04004        mov              r4, r4
-  109 00000108         sign_delay
-  110 00000108 E2544001        subs             r4,r4,#1
-  111 0000010C 1AFFFFFD        bne              sign_delay
-  112 00000110         
-  113 00000110         next_num
-  114 00000110 E79D5007        ldr              r5, [r13, r7]
-  115 00000114 EB000014        BL               check_num
-  116 00000118 E2877004        ADD              r7, #4
-  117 0000011C         
-  118 0000011C E59F417C        ldr              r4,=20000000 ;delay to show the
-                                                             sign
-  119 00000120 E1A04004        mov              r4, r4
-  120 00000124         num_delay
-  121 00000124 E2544001        subs             r4,r4,#1
-  122 00000128 1AFFFFFD        bne              num_delay
-  123 0000012C         
-  124 0000012C E3570000        CMP              r7, #0
-  125 00000130 0A000000        BEQ              last_num
-  126 00000134 EAFFFFF5        B                next_num
-  127 00000138         
-  128 00000138         last_num
-  129 00000138         
-  130 00000138         
-  131 00000138 EAFFFFDC        B                loop_
-  132 0000013C         
-  133 0000013C 00000419 
+  127 00000104 E1A04004        mov              r4, r4
+  128 00000108         sign_delay
+  129 00000108 E2544001        subs             r4,r4,#1
+  130 0000010C 1AFFFFFD        bne              sign_delay
+  131 00000110         
+  132 00000110         ;shift 'stack pointer' to the top of the stack initially
+                        using 'stack counter'
+  133 00000110         ;load number from the stack
+  134 00000110         ;add 4 to 'stack counter'
+  135 00000110         next_num
+  136 00000110 E79D5007        ldr              r5, [r13, r7]
+  137 00000114 EB000014        BL               check_num
+  138 00000118 E2877004        ADD              r7, #4
+  139 0000011C         
+  140 0000011C         
+  141 0000011C E59F417C        ldr              r4,=20000000 ;delay to show the
+                                                             number
+  142 00000120 E1A04004        mov              r4, r4
+  143 00000124         num_delay
+  144 00000124 E2544001        subs             r4,r4,#1
+  145 00000128 1AFFFFFD        bne              num_delay
+  146 0000012C         
+  147 0000012C         ;check if we have went through the whole stack
+  148 0000012C         ;loop to next number otherwise loop to start again
+  149 0000012C E3570000        CMP              r7, #0
+  150 00000130 0A000000        BEQ              last_num
+  151 00000134 EAFFFFF5        B                next_num
+  152 00000138         
+  153 00000138         last_num
+  154 00000138         
+  155 00000138         ;loop again
+  156 00000138 EAFFFFDC        B                loop_
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+  157 0000013C         
+  158 0000013C 00000419 
                        INSTR   DCD              1049
-  134 00000140 3B9ACA00 
+  159 00000140 3B9ACA00 
               05F5E100 
               00989680 
               000F4240 
@@ -179,130 +213,131 @@ ARM Macro Assembler    Page 3
               0000000A 
               00000001 LUT     DCD              1000000000, 100000000, 10000000
 , 1000000, 100000, 10000, 1000, 100, 10, 1
-  135 00000168         
-  136 00000168 EAFFFFFE 
+  160 00000168         
+  161 00000168 EAFFFFFE 
                        stop    B                stop
-  137 0000016C         
-  138 0000016C         
-  139 0000016C         check_num
-  140 0000016C E3550009        CMP              r5, #9
-  141 00000170 0A000011        BEQ              nine
-  142 00000174 E3550008        CMP              r5, #8
-  143 00000178 0A000014        BEQ              eight
-  144 0000017C E3550007        CMP              r5, #7
-  145 00000180 0A000017        BEQ              seven
-  146 00000184 E3550006        CMP              r5, #6
-  147 00000188 0A00001A        BEQ              six
-
-
-
-ARM Macro Assembler    Page 4 
-
-
-  148 0000018C E3550005        CMP              r5, #5
-  149 00000190 0A00001D        BEQ              five
-  150 00000194 E3550004        CMP              r5, #4
-  151 00000198 0A000020        BEQ              four
-  152 0000019C E3550003        CMP              r5, #3
-  153 000001A0 0A000023        BEQ              three
-  154 000001A4 E3550002        CMP              r5, #2
-  155 000001A8 0A000026        BEQ              two
-  156 000001AC E3550001        CMP              r5, #1
-  157 000001B0 0A000029        BEQ              one
-  158 000001B4 E3550000        CMP              r5, #0
-  159 000001B8 0A00002C        BEQ              zero
-  160 000001BC         
-  161 000001BC         nine
-  162 000001BC E5823000        str              r3,[r2]     ;turn on P1.16 LED 
+  162 0000016C         
+  163 0000016C         ;subroutine that sets the leds to their corresponing num
+                       ber
+  164 0000016C         check_num
+  165 0000016C E3550009        CMP              r5, #9
+  166 00000170 0A000011        BEQ              nine
+  167 00000174 E3550008        CMP              r5, #8
+  168 00000178 0A000014        BEQ              eight
+  169 0000017C E3550007        CMP              r5, #7
+  170 00000180 0A000017        BEQ              seven
+  171 00000184 E3550006        CMP              r5, #6
+  172 00000188 0A00001A        BEQ              six
+  173 0000018C E3550005        CMP              r5, #5
+  174 00000190 0A00001D        BEQ              five
+  175 00000194 E3550004        CMP              r5, #4
+  176 00000198 0A000020        BEQ              four
+  177 0000019C E3550003        CMP              r5, #3
+  178 000001A0 0A000023        BEQ              three
+  179 000001A4 E3550002        CMP              r5, #2
+  180 000001A8 0A000026        BEQ              two
+  181 000001AC E3550001        CMP              r5, #1
+  182 000001B0 0A000029        BEQ              one
+  183 000001B4 E3550000        CMP              r5, #0
+  184 000001B8 0A00002C        BEQ              zero
+  185 000001BC         
+  186 000001BC         nine
+  187 000001BC E5823000        str              r3,[r2]     ;turn on P1.16 LED 
                                                             (+) 
-  163 000001C0 E5818000        str              r8,[r1]     ;turn off P1.17
-  164 000001C4 E5819000        str              r9,[r1]     ;turn on P1.18
-  165 000001C8 E582A000        str              r10,[r2]    ;turn on P1.19
-  166 000001CC EA00002C        B                end_sub_r
-  167 000001D0         
-  168 000001D0         eight
-  169 000001D0 E5823000        str              r3,[r2]     ;turn on P1.16 LED 
+  188 000001C0 E5818000        str              r8,[r1]     ;turn off P1.17
+  189 000001C4 E5819000        str              r9,[r1]     ;turn on P1.18
+  190 000001C8 E582A000        str              r10,[r2]    ;turn on P1.19
+  191 000001CC EA00002C        B                end_sub_r
+  192 000001D0         
+  193 000001D0         eight
+  194 000001D0 E5823000        str              r3,[r2]     ;turn on P1.16 LED 
                                                             (+) 
-  170 000001D4 E5818000        str              r8,[r1]     ;turn off P1.17
-  171 000001D8 E5819000        str              r9,[r1]     ;turn on P1.18
-  172 000001DC E581A000        str              r10,[r1]    ;turn on P1.19
-  173 000001E0 EA000027        B                end_sub_r
-  174 000001E4         
-  175 000001E4         seven
-  176 000001E4 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
-                                                            (+) 
-  177 000001E8 E5828000        str              r8,[r2]     ;turn off P1.17
-  178 000001EC E5829000        str              r9,[r2]     ;turn on P1.18
-  179 000001F0 E582A000        str              r10,[r2]    ;turn on P1.19
-  180 000001F4 EA000022        B                end_sub_r
-  181 000001F8         
-  182 000001F8         six
-  183 000001F8 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
-                                                            (+) 
-  184 000001FC E5828000        str              r8,[r2]     ;turn off P1.17
-  185 00000200 E5829000        str              r9,[r2]     ;turn on P1.18
-  186 00000204 E581A000        str              r10,[r1]    ;turn on P1.19
-  187 00000208 EA00001D        B                end_sub_r
-  188 0000020C         
-  189 0000020C         five
-  190 0000020C E5813000        str              r3,[r1]     ;turn on P1.16 LED 
-                                                            (+) 
-  191 00000210 E5828000        str              r8,[r2]     ;turn off P1.17
-  192 00000214 E5819000        str              r9,[r1]     ;turn on P1.18
-  193 00000218 E582A000        str              r10,[r2]    ;turn on P1.19
-  194 0000021C EA000018        B                end_sub_r
-  195 00000220         
-  196 00000220         four
-  197 00000220 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
-                                                            (+) 
-  198 00000224 E5828000        str              r8,[r2]     ;turn off P1.17
-  199 00000228 E5819000        str              r9,[r1]     ;turn on P1.18
-  200 0000022C E581A000        str              r10,[r1]    ;turn on P1.19
+  195 000001D4 E5818000        str              r8,[r1]     ;turn off P1.17
+  196 000001D8 E5819000        str              r9,[r1]     ;turn on P1.18
+  197 000001DC E581A000        str              r10,[r1]    ;turn on P1.19
+  198 000001E0 EA000027        B                end_sub_r
+  199 000001E4         
+  200 000001E4         seven
 
 
 
 ARM Macro Assembler    Page 5 
 
 
-  201 00000230 EA000013        B                end_sub_r
-  202 00000234         
-  203 00000234         three
-  204 00000234 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
+  201 000001E4 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
                                                             (+) 
-  205 00000238 E5818000        str              r8,[r1]     ;turn off P1.17
-  206 0000023C E5829000        str              r9,[r2]     ;turn on P1.18
-  207 00000240 E582A000        str              r10,[r2]    ;turn on P1.19
-  208 00000244 EA00000E        B                end_sub_r
-  209 00000248         
-  210 00000248         two
-  211 00000248 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
+  202 000001E8 E5828000        str              r8,[r2]     ;turn off P1.17
+  203 000001EC E5829000        str              r9,[r2]     ;turn on P1.18
+  204 000001F0 E582A000        str              r10,[r2]    ;turn on P1.19
+  205 000001F4 EA000022        B                end_sub_r
+  206 000001F8         
+  207 000001F8         six
+  208 000001F8 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
                                                             (+) 
-  212 0000024C E5818000        str              r8,[r1]     ;turn off P1.17
-  213 00000250 E5829000        str              r9,[r2]     ;turn on P1.18
-  214 00000254 E581A000        str              r10,[r1]    ;turn on P1.19
-  215 00000258 EA000009        B                end_sub_r
-  216 0000025C         
-  217 0000025C         one
-  218 0000025C E5813000        str              r3,[r1]     ;turn on P1.16 LED 
+  209 000001FC E5828000        str              r8,[r2]     ;turn off P1.17
+  210 00000200 E5829000        str              r9,[r2]     ;turn on P1.18
+  211 00000204 E581A000        str              r10,[r1]    ;turn on P1.19
+  212 00000208 EA00001D        B                end_sub_r
+  213 0000020C         
+  214 0000020C         five
+  215 0000020C E5813000        str              r3,[r1]     ;turn on P1.16 LED 
                                                             (+) 
-  219 00000260 E5818000        str              r8,[r1]     ;turn off P1.17
-  220 00000264 E5819000        str              r9,[r1]     ;turn on P1.18
-  221 00000268 E582A000        str              r10,[r2]    ;turn on P1.19
-  222 0000026C EA000004        B                end_sub_r
-  223 00000270         
-  224 00000270         zero
-  225 00000270 E5823000        str              r3,[r2]     ;turn on P1.16 LED 
+  216 00000210 E5828000        str              r8,[r2]     ;turn off P1.17
+  217 00000214 E5819000        str              r9,[r1]     ;turn on P1.18
+  218 00000218 E582A000        str              r10,[r2]    ;turn on P1.19
+  219 0000021C EA000018        B                end_sub_r
+  220 00000220         
+  221 00000220         four
+  222 00000220 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
                                                             (+) 
-  226 00000274 E5828000        str              r8,[r2]     ;turn off P1.17
-  227 00000278 E5829000        str              r9,[r2]     ;turn on P1.18
-  228 0000027C E582A000        str              r10,[r2]    ;turn on P1.19
-  229 00000280 EAFFFFFF        B                end_sub_r
-  230 00000284         
-  231 00000284         
-  232 00000284         end_sub_r
-  233 00000284 E12FFF1E        BX               lr
-  234 00000288         
-  235 00000288                 END
+  223 00000224 E5828000        str              r8,[r2]     ;turn off P1.17
+  224 00000228 E5819000        str              r9,[r1]     ;turn on P1.18
+  225 0000022C E581A000        str              r10,[r1]    ;turn on P1.19
+  226 00000230 EA000013        B                end_sub_r
+  227 00000234         
+  228 00000234         three
+  229 00000234 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
+                                                            (+) 
+  230 00000238 E5818000        str              r8,[r1]     ;turn off P1.17
+  231 0000023C E5829000        str              r9,[r2]     ;turn on P1.18
+  232 00000240 E582A000        str              r10,[r2]    ;turn on P1.19
+  233 00000244 EA00000E        B                end_sub_r
+  234 00000248         
+  235 00000248         two
+  236 00000248 E5813000        str              r3,[r1]     ;turn on P1.16 LED 
+                                                            (+) 
+  237 0000024C E5818000        str              r8,[r1]     ;turn off P1.17
+  238 00000250 E5829000        str              r9,[r2]     ;turn on P1.18
+  239 00000254 E581A000        str              r10,[r1]    ;turn on P1.19
+  240 00000258 EA000009        B                end_sub_r
+  241 0000025C         
+  242 0000025C         one
+  243 0000025C E5813000        str              r3,[r1]     ;turn on P1.16 LED 
+                                                            (+) 
+  244 00000260 E5818000        str              r8,[r1]     ;turn off P1.17
+  245 00000264 E5819000        str              r9,[r1]     ;turn on P1.18
+  246 00000268 E582A000        str              r10,[r2]    ;turn on P1.19
+  247 0000026C EA000004        B                end_sub_r
+  248 00000270         
+  249 00000270         zero
+  250 00000270 E5823000        str              r3,[r2]     ;turn on P1.16 LED 
+                                                            (+) 
+  251 00000274 E5828000        str              r8,[r2]     ;turn off P1.17
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+  252 00000278 E5829000        str              r9,[r2]     ;turn on P1.18
+  253 0000027C E582A000        str              r10,[r2]    ;turn on P1.19
+  254 00000280 EAFFFFFF        B                end_sub_r
+  255 00000284         
+  256 00000284         
+  257 00000284         end_sub_r
+  258 00000284 E12FFF1E        BX               lr
+  259 00000288         
+  260 00000288                 END
               00000419 
               00000000 
               E0028018 
@@ -312,8 +347,8 @@ ARM Macro Assembler    Page 5
               01312D00 
 Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\a
 pp.d -o.\app.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMSIS\Include -IC:\Ke
-il_v5\ARM\Inc\Philips --predefine="__MICROLIB SETA 1" --predefine="__UVISION_VE
-RSION SETA 516" --list=.\listings\app.lst App.s
+il_v5\ARM\INC\Philips --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 
+1" --predefine="__UVISION_VERSION SETA 525" --list=.\listings\app.lst App.s
 
 
 
@@ -332,7 +367,7 @@ INSTR 0000013C
 
 Symbol: INSTR
    Definitions
-      At line 133 in file App.s
+      At line 158 in file App.s
    Uses
       None
 Comment: INSTR unused
@@ -340,110 +375,110 @@ LUT 00000140
 
 Symbol: LUT
    Definitions
-      At line 134 in file App.s
+      At line 159 in file App.s
    Uses
-      At line 11 in file App.s
+      At line 12 in file App.s
 Comment: LUT used once
 check_num 0000016C
 
 Symbol: check_num
    Definitions
-      At line 139 in file App.s
+      At line 164 in file App.s
    Uses
-      At line 115 in file App.s
+      At line 137 in file App.s
 Comment: check_num used once
 dloop 000000CC
 
 Symbol: dloop
    Definitions
-      At line 85 in file App.s
+      At line 104 in file App.s
    Uses
-      At line 86 in file App.s
+      At line 105 in file App.s
 Comment: dloop used once
 eight 000001D0
 
 Symbol: eight
    Definitions
-      At line 168 in file App.s
+      At line 193 in file App.s
    Uses
-      At line 143 in file App.s
+      At line 168 in file App.s
 Comment: eight used once
 end_sub_r 00000284
 
 Symbol: end_sub_r
    Definitions
-      At line 232 in file App.s
+      At line 257 in file App.s
    Uses
-      At line 166 in file App.s
-      At line 173 in file App.s
-      At line 180 in file App.s
-      At line 187 in file App.s
-      At line 194 in file App.s
+      At line 191 in file App.s
+      At line 198 in file App.s
+      At line 205 in file App.s
+      At line 212 in file App.s
+      At line 219 in file App.s
 
 
 
 ARM Macro Assembler    Page 2 Alphabetic symbol ordering
 Relocatable symbols
 
-      At line 201 in file App.s
-      At line 208 in file App.s
-      At line 215 in file App.s
-      At line 222 in file App.s
-      At line 229 in file App.s
+      At line 226 in file App.s
+      At line 233 in file App.s
+      At line 240 in file App.s
+      At line 247 in file App.s
+      At line 254 in file App.s
 
 finish_check 00000088
 
 Symbol: finish_check
    Definitions
-      At line 53 in file App.s
+      At line 69 in file App.s
    Uses
-      At line 49 in file App.s
+      At line 65 in file App.s
 Comment: finish_check used once
 five 0000020C
 
 Symbol: five
    Definitions
-      At line 189 in file App.s
+      At line 214 in file App.s
    Uses
-      At line 149 in file App.s
+      At line 174 in file App.s
 Comment: five used once
 four 00000220
 
 Symbol: four
    Definitions
-      At line 196 in file App.s
+      At line 221 in file App.s
    Uses
-      At line 151 in file App.s
+      At line 176 in file App.s
 Comment: four used once
 last_num 00000138
 
 Symbol: last_num
    Definitions
-      At line 128 in file App.s
+      At line 153 in file App.s
    Uses
-      At line 125 in file App.s
+      At line 150 in file App.s
 Comment: last_num used once
 loop_ 000000B0
 
 Symbol: loop_
    Definitions
-      At line 75 in file App.s
+      At line 93 in file App.s
    Uses
-      At line 131 in file App.s
+      At line 156 in file App.s
 Comment: loop_ used once
 next_check 00000048
 
 Symbol: next_check
    Definitions
-      At line 33 in file App.s
+      At line 40 in file App.s
    Uses
-      At line 30 in file App.s
+      At line 37 in file App.s
 Comment: next_check used once
 next_num 00000110
 
 Symbol: next_num
    Definitions
-      At line 113 in file App.s
+      At line 135 in file App.s
 
 
 
@@ -451,63 +486,63 @@ ARM Macro Assembler    Page 3 Alphabetic symbol ordering
 Relocatable symbols
 
    Uses
-      At line 126 in file App.s
+      At line 151 in file App.s
 Comment: next_num used once
 nine 000001BC
 
 Symbol: nine
    Definitions
-      At line 161 in file App.s
+      At line 186 in file App.s
    Uses
-      At line 141 in file App.s
+      At line 166 in file App.s
 Comment: nine used once
 num_delay 00000124
 
 Symbol: num_delay
    Definitions
-      At line 120 in file App.s
+      At line 143 in file App.s
    Uses
-      At line 122 in file App.s
+      At line 145 in file App.s
 Comment: num_delay used once
 one 0000025C
 
 Symbol: one
    Definitions
-      At line 217 in file App.s
+      At line 242 in file App.s
    Uses
-      At line 157 in file App.s
+      At line 182 in file App.s
 Comment: one used once
 pos 00000030
 
 Symbol: pos
    Definitions
-      At line 25 in file App.s
+      At line 29 in file App.s
    Uses
-      At line 19 in file App.s
+      At line 21 in file App.s
 Comment: pos used once
 positive 000000F0
 
 Symbol: positive
    Definitions
-      At line 98 in file App.s
+      At line 118 in file App.s
    Uses
-      At line 90 in file App.s
+      At line 110 in file App.s
 Comment: positive used once
 seven 000001E4
 
 Symbol: seven
    Definitions
-      At line 175 in file App.s
+      At line 200 in file App.s
    Uses
-      At line 145 in file App.s
+      At line 170 in file App.s
 Comment: seven used once
 sign_delay 00000108
 
 Symbol: sign_delay
    Definitions
-      At line 109 in file App.s
+      At line 128 in file App.s
    Uses
-      At line 111 in file App.s
+      At line 130 in file App.s
 Comment: sign_delay used once
 
 
@@ -519,33 +554,33 @@ six 000001F8
 
 Symbol: six
    Definitions
-      At line 182 in file App.s
+      At line 207 in file App.s
    Uses
-      At line 147 in file App.s
+      At line 172 in file App.s
 Comment: six used once
 skip_1 0000005C
 
 Symbol: skip_1
    Definitions
-      At line 39 in file App.s
+      At line 48 in file App.s
    Uses
-      At line 37 in file App.s
+      At line 46 in file App.s
 Comment: skip_1 used once
 skip_2 00000070
 
 Symbol: skip_2
    Definitions
-      At line 45 in file App.s
+      At line 58 in file App.s
    Uses
-      At line 42 in file App.s
+      At line 53 in file App.s
 Comment: skip_2 used once
 skip_pos 00000100
 
 Symbol: skip_pos
    Definitions
-      At line 104 in file App.s
+      At line 124 in file App.s
    Uses
-      At line 96 in file App.s
+      At line 116 in file App.s
 Comment: skip_pos used once
 start 00000000
 
@@ -559,17 +594,17 @@ stop 00000168
 
 Symbol: stop
    Definitions
-      At line 136 in file App.s
+      At line 161 in file App.s
    Uses
-      At line 136 in file App.s
+      At line 161 in file App.s
 Comment: stop used once
 three 00000234
 
 Symbol: three
    Definitions
-      At line 203 in file App.s
+      At line 228 in file App.s
    Uses
-      At line 153 in file App.s
+      At line 178 in file App.s
 Comment: three used once
 two 00000248
 
@@ -581,26 +616,26 @@ ARM Macro Assembler    Page 5 Alphabetic symbol ordering
 Relocatable symbols
 
    Definitions
-      At line 210 in file App.s
+      At line 235 in file App.s
    Uses
-      At line 155 in file App.s
+      At line 180 in file App.s
 Comment: two used once
 while 00000034
 
 Symbol: while
    Definitions
-      At line 27 in file App.s
+      At line 31 in file App.s
    Uses
-      At line 32 in file App.s
-      At line 51 in file App.s
+      At line 39 in file App.s
+      At line 67 in file App.s
 
 zero 00000270
 
 Symbol: zero
    Definitions
-      At line 224 in file App.s
+      At line 249 in file App.s
    Uses
-      At line 159 in file App.s
+      At line 184 in file App.s
 Comment: zero used once
 31 symbols
 
@@ -613,25 +648,25 @@ IO1CLR E002801C
 
 Symbol: IO1CLR
    Definitions
-      At line 58 in file App.s
+      At line 74 in file App.s
    Uses
-      At line 65 in file App.s
+      At line 81 in file App.s
 Comment: IO1CLR used once
 IO1DIR E0028018
 
 Symbol: IO1DIR
    Definitions
-      At line 56 in file App.s
+      At line 72 in file App.s
    Uses
-      At line 60 in file App.s
+      At line 76 in file App.s
 Comment: IO1DIR used once
 IO1SET E0028014
 
 Symbol: IO1SET
    Definitions
-      At line 57 in file App.s
+      At line 73 in file App.s
    Uses
-      At line 63 in file App.s
+      At line 79 in file App.s
 Comment: IO1SET used once
 3 symbols
 
@@ -649,4 +684,4 @@ Symbol: main
       None
 Comment: main unused
 1 symbol
-369 symbols in table
+370 symbols in table
