@@ -7,7 +7,8 @@
 	EXPORT	start
 start
 		;loading in number to process
-           LDR R0, =1049
+           LDR R1, =INSTR
+		   LDR R0, [R1]
 		   ;look up table for powers of 10
            LDR R1, =LUT
 		   ;initialising registers
