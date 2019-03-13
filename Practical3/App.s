@@ -205,11 +205,11 @@ _longpress
 	beq long_press
 	
 	;if it is not a long press we add
+	;display previous calculation
+	str r12, [r9]
 	;add current number (r4) to previous stored value (r10) 
-	add r10, r10, r4
-	;display
-	str r10, [r9]
 	mov r12, r10
+	add r10, r10, r4
 	mov r4, #0
 	
 	;delay to show the number for split second
@@ -299,10 +299,11 @@ _longpress1
 	beq long_press1
 
 	;if it wasnt a long press 
-	;subtract current number from previous stored value 
-	sub r10, r10, r4
 	;display the result of the previous calculation
-	str r10, [r9]
+	str r12, [r9]
+	;subtract current number from previous stored value 
+	mov r12, r10
+	sub r10, r10, r4
 	mov r4, #0
 	
 	;delay to show the number for a split second
