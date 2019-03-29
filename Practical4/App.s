@@ -87,23 +87,21 @@ IO1CLR	EQU	0xE002800C
 
 ;from here, initialisation is finished, so it should be the main body of the main program
 
-	ldr r11, =COUNT
-	ldr r4, [r11]
 	ldr r5, =LUT
-	ldr	r6,=IO1SET
-	ldr	r7,=IO1CLR
+	ldr r6,=IO1SET
+	ldr r7,=IO1CLR
 	ldr r8, =0
+	ldr r12, =200
 	
 loop1
-	subs r4, #200
-	beq light_up
-	bpl loop1
-	bmi no_light_up
-	
-light_up
+	ldr r11, =COUNT
+	ldr r4, [r11]
+	cmp r4, r12
+	bne loop1
+	add r12, #200
 
 	;now turn all leds off
-	str	r3,[r6]	
+	str r3,[r6]	
 	;load in next led mask
 	ldr r9, [r5, r8]
 	;turn on this led
@@ -115,10 +113,8 @@ light_up
 	b no_increment
 
 increment
-	add r8, r8, #4
-	
+	add r8, r8, #4	
 no_increment
-no_light_up
 
 	b loop1
 	

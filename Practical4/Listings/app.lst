@@ -162,123 +162,119 @@ ARM Macro Assembler    Page 3
    88 00000064         ;from here, initialisation is finished, so it should be 
                        the main body of the main program
    89 00000064         
-   90 00000064 E59FB06C        ldr              r11, =COUNT
-   91 00000068 E59B4000        ldr              r4, [r11]
-   92 0000006C E59F5068        ldr              r5, =LUT
-   93 00000070 E59F604C        ldr              r6,=IO1SET
-   94 00000074 E59F7064        ldr              r7,=IO1CLR
-   95 00000078 E3A08000        ldr              r8, =0
-   96 0000007C         
-   97 0000007C         loop1
-   98 0000007C E25440C8        subs             r4, #200
-   99 00000080 0A000001        beq              light_up
-  100 00000084 5AFFFFFC        bpl              loop1
-  101 00000088 4A000007        bmi              no_light_up
+   90 00000064 E59F506C        ldr              r5, =LUT
+   91 00000068 E59F6054        ldr              r6,=IO1SET
+   92 0000006C E59F7068        ldr              r7,=IO1CLR
+   93 00000070 E3A08000        ldr              r8, =0
+   94 00000074 E3A0C0C8        ldr              r12, =200
+   95 00000078         
+   96 00000078         loop1
+   97 00000078 E59FB060        ldr              r11, =COUNT
+   98 0000007C E59B4000        ldr              r4, [r11]
+   99 00000080 E154000C        cmp              r4, r12
+  100 00000084 1AFFFFFB        bne              loop1
+  101 00000088 E28CC0C8        add              r12, #200
   102 0000008C         
-  103 0000008C         light_up
-  104 0000008C         
-  105 0000008C         ;now turn all leds off
-  106 0000008C E5863000        str              r3,[r6]
-  107 00000090         ;load in next led mask
-  108 00000090 E7959008        ldr              r9, [r5, r8]
-  109 00000094         ;turn on this led
-  110 00000094 E5879000        str              r9, [r7]
-  111 00000098         
-  112 00000098 E258A008        subs             r10, r8, #8
-  113 0000009C 1A000001        bne              increment
-  114 000000A0 E1A0800A        mov              r8, r10
-  115 000000A4 EA000000        b                no_increment
-  116 000000A8         
-  117 000000A8         increment
-  118 000000A8 E2888004        add              r8, r8, #4
-  119 000000AC         
-  120 000000AC         no_increment
+  103 0000008C         ;now turn all leds off
+  104 0000008C E5863000        str              r3,[r6]
+  105 00000090         ;load in next led mask
+  106 00000090 E7959008        ldr              r9, [r5, r8]
+  107 00000094         ;turn on this led
+  108 00000094 E5879000        str              r9, [r7]
+  109 00000098         
+  110 00000098 E258A008        subs             r10, r8, #8
+  111 0000009C 1A000001        bne              increment
+  112 000000A0 E1A0800A        mov              r8, r10
+  113 000000A4 EA000000        b                no_increment
+  114 000000A8         
+  115 000000A8         increment
+  116 000000A8 E2888004        add              r8, r8, #4
+  117 000000AC         no_increment
+  118 000000AC         
+  119 000000AC EAFFFFF1        b                loop1
+  120 000000B0         
 
 
 
 ARM Macro Assembler    Page 4 
 
 
-  121 000000AC         no_light_up
-  122 000000AC         
-  123 000000AC EAFFFFF2        b                loop1
-  124 000000B0         
-  125 000000B0 00200000 
+  121 000000B0 00200000 
               00020000 
               00040000 LUT     DCD              0x00200000, 0x00020000, 0x00040
 000
-  126 000000BC         
-  127 000000BC EAFFFFFE 
+  122 000000BC         
+  123 000000BC EAFFFFFE 
                        wloop   b                wloop       ; branch always
-  128 000000C0         ;main program execution will never drop below the statem
+  124 000000C0         ;main program execution will never drop below the statem
                        ent above.
-  129 000000C0         
-  130 000000C0 E0028008 
+  125 000000C0         
+  126 000000C0 E0028008 
               E0028004 
               FFFFF000 
               00000000 
               E0004000 
               00011FFF 
               00000000 
-              00000000 
-              E002800C         AREA             InterruptStuff, CODE, READONLY
-  131 00000000 E24EE004 
+              E002800C 
+              00000000         AREA             InterruptStuff, CODE, READONLY
+  127 00000000 E24EE004 
                        irqhan  sub              lr,lr,#4
-  132 00000004 E92D4003        stmfd            sp!,{r0-r1,lr} ; the lr will be
+  128 00000004 E92D4003        stmfd            sp!,{r0-r1,lr} ; the lr will be
                                                              restored to the pc
                                                             
-  133 00000008         
-  134 00000008         ;this is the body of the interrupt handler
-  135 00000008         ;here you'd put the unique part of your interrupt handle
+  129 00000008         
+  130 00000008         ;this is the body of the interrupt handler
+  131 00000008         ;here you'd put the unique part of your interrupt handle
                        r
-  136 00000008         ;all the other stuff is "housekeeping" to save registers
+  132 00000008         ;all the other stuff is "housekeeping" to save registers
                         and acknowledge interrupts
-  137 00000008         
-  138 00000008         
-  139 00000008 E59F0024        ldr              r0, =COUNT
-  140 0000000C E5901000        ldr              r1, [r0]
-  141 00000010 E2811001        add              r1, #1
-  142 00000014 E5801000        str              r1, [r0]
-  143 00000018         
-  144 00000018         
-  145 00000018         ;this is where we stop the timer from making the interru
+  133 00000008         
+  134 00000008         
+  135 00000008 E59F0024        ldr              r0, =COUNT
+  136 0000000C E5901000        ldr              r1, [r0]
+  137 00000010 E2811001        add              r1, #1
+  138 00000014 E5801000        str              r1, [r0]
+  139 00000018         
+  140 00000018         
+  141 00000018         ;this is where we stop the timer from making the interru
                        pt request to the VIC
-  146 00000018         ;i.e. we 'acknowledge' the interrupt
-  147 00000018 E59F0018        ldr              r0,=T0
-  148 0000001C E3A01001        mov              r1,#TimerResetTimer0Interrupt
-  149 00000020 E5801000        str              r1,[r0,#IR] ; remove MR0 interr
+  142 00000018         ;i.e. we 'acknowledge' the interrupt
+  143 00000018 E59F0018        ldr              r0,=T0
+  144 0000001C E3A01001        mov              r1,#TimerResetTimer0Interrupt
+  145 00000020 E5801000        str              r1,[r0,#IR] ; remove MR0 interr
                                                             upt request from ti
                                                             mer
-  150 00000024         
-  151 00000024         ;here we stop the VIC from making the interrupt request 
+  146 00000024         
+  147 00000024         ;here we stop the VIC from making the interrupt request 
                        to the CPU:
-  152 00000024 E59F0010        ldr              r0,=VIC
-  153 00000028 E3A01000        mov              r1,#0
-  154 0000002C E5801030        str              r1,[r0,#VectAddr] ; reset VIC
-  155 00000030         
-  156 00000030 E8FD8003        ldmfd            sp!,{r0-r1,pc}^ ; return from i
+  148 00000024 E59F0010        ldr              r0,=VIC
+  149 00000028 E3A01000        mov              r1,#0
+  150 0000002C E5801030        str              r1,[r0,#VectAddr] ; reset VIC
+  151 00000030         
+  152 00000030 E8FD8003        ldmfd            sp!,{r0-r1,pc}^ ; return from i
                                                             nterrupt, restoring
+                                                             pc from lr
+  153 00000034         ; and also restoring the CPSR
+  154 00000034         
+  155 00000034 00000000 
 
 
 
 ARM Macro Assembler    Page 5 
 
 
-                                                             pc from lr
-  157 00000034         ; and also restoring the CPSR
-  158 00000034         
-  159 00000034 00000000 
               E0004000 
               FFFFF000         AREA             Counter, DATA, READWRITE
-  160 00000000         
-  161 00000000 00000000 
+  156 00000000         
+  157 00000000 00000000 
                        COUNT   DCD              0
-  162 00000004         
-  163 00000004                 END
+  158 00000004         
+  159 00000004                 END
 Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\a
 pp.d -o.\app.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMSIS\Include -IC:\Ke
-il_v5\ARM\Inc\Philips --predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 
-1" --predefine="__UVISION_VERSION SETA 516" --list=.\listings\app.lst App.s
+il_v5\ARM\Inc\Philips --predefine="__MICROLIB SETA 1" --predefine="__UVISION_VE
+RSION SETA 516" --list=.\listings\app.lst App.s
 
 
 
@@ -297,58 +293,36 @@ LUT 000000B0
 
 Symbol: LUT
    Definitions
-      At line 125 in file App.s
+      At line 121 in file App.s
    Uses
-      At line 92 in file App.s
+      At line 90 in file App.s
 Comment: LUT used once
 increment 000000A8
 
 Symbol: increment
    Definitions
-      At line 117 in file App.s
+      At line 115 in file App.s
    Uses
-      At line 113 in file App.s
+      At line 111 in file App.s
 Comment: increment used once
-light_up 0000008C
-
-Symbol: light_up
-   Definitions
-      At line 103 in file App.s
-   Uses
-      At line 99 in file App.s
-Comment: light_up used once
-loop1 0000007C
+loop1 00000078
 
 Symbol: loop1
    Definitions
-      At line 97 in file App.s
+      At line 96 in file App.s
    Uses
       At line 100 in file App.s
-      At line 123 in file App.s
+      At line 119 in file App.s
 
 no_increment 000000AC
 
 Symbol: no_increment
    Definitions
-      At line 120 in file App.s
+      At line 117 in file App.s
    Uses
-      At line 115 in file App.s
+      At line 113 in file App.s
 Comment: no_increment used once
-no_light_up 000000AC
-
-Symbol: no_light_up
-   Definitions
-      At line 121 in file App.s
-   Uses
-      At line 101 in file App.s
-Comment: no_light_up used once
 start 00000000
-
-
-
-
-ARM Macro Assembler    Page 2 Alphabetic symbol ordering
-Relocatable symbols
 
 Symbol: start
    Definitions
@@ -360,11 +334,11 @@ wloop 000000BC
 
 Symbol: wloop
    Definitions
-      At line 127 in file App.s
+      At line 123 in file App.s
    Uses
-      At line 127 in file App.s
+      At line 123 in file App.s
 Comment: wloop used once
-9 symbols
+7 symbols
 
 
 
@@ -375,7 +349,7 @@ InterruptStuff 00000000
 
 Symbol: InterruptStuff
    Definitions
-      At line 130 in file App.s
+      At line 126 in file App.s
    Uses
       None
 Comment: InterruptStuff unused
@@ -383,7 +357,7 @@ irqhan 00000000
 
 Symbol: irqhan
    Definitions
-      At line 131 in file App.s
+      At line 127 in file App.s
    Uses
       At line 58 in file App.s
 Comment: irqhan used once
@@ -398,16 +372,16 @@ COUNT 00000000
 
 Symbol: COUNT
    Definitions
-      At line 161 in file App.s
+      At line 157 in file App.s
    Uses
-      At line 90 in file App.s
-      At line 139 in file App.s
+      At line 97 in file App.s
+      At line 135 in file App.s
 
 Counter 00000000
 
 Symbol: Counter
    Definitions
-      At line 159 in file App.s
+      At line 155 in file App.s
    Uses
       None
 Comment: Counter unused
@@ -424,7 +398,7 @@ Symbol: IO1CLR
    Definitions
       At line 41 in file App.s
    Uses
-      At line 94 in file App.s
+      At line 92 in file App.s
 Comment: IO1CLR used once
 IO1DIR E0028008
 
@@ -441,7 +415,7 @@ Symbol: IO1SET
       At line 40 in file App.s
    Uses
       At line 51 in file App.s
-      At line 93 in file App.s
+      At line 91 in file App.s
 
 IR 00000000
 
@@ -450,7 +424,7 @@ Symbol: IR
       At line 8 in file App.s
    Uses
       At line 77 in file App.s
-      At line 149 in file App.s
+      At line 145 in file App.s
 
 IRQslot_en 00000005
 
@@ -497,7 +471,7 @@ Symbol: T0
       At line 5 in file App.s
    Uses
       At line 71 in file App.s
-      At line 147 in file App.s
+      At line 143 in file App.s
 
 T1 E0008000
 
@@ -577,7 +551,7 @@ Symbol: TimerResetTimer0Interrupt
    Definitions
       At line 16 in file App.s
    Uses
-      At line 148 in file App.s
+      At line 144 in file App.s
 Comment: TimerResetTimer0Interrupt used once
 VIC FFFFF000
 
@@ -586,7 +560,7 @@ Symbol: VIC
       At line 20 in file App.s
    Uses
       At line 56 in file App.s
-      At line 152 in file App.s
+      At line 148 in file App.s
 
 VectAddr 00000030
 
@@ -595,7 +569,7 @@ Symbol: VectAddr
       At line 22 in file App.s
    Uses
       At line 68 in file App.s
-      At line 154 in file App.s
+      At line 150 in file App.s
 
 VectAddr0 00000100
 
@@ -635,4 +609,4 @@ Symbol: main
       None
 Comment: main unused
 1 symbol
-373 symbols in table
+370 symbols in table
